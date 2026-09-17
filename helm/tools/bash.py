@@ -2,6 +2,7 @@ import os
 import shutil
 import subprocess
 from pathlib import Path
+from .. import sandbox
 
 MAX_CHARS = 30_000
 DEFAULT_TIMEOUT = 60
@@ -90,12 +91,18 @@ def bash(command: str, timeout: int = DEFAULT_TIMEOUT) -> str:
     except (TypeError, ValueError):
         timeout = DEFAULT_TIMEOUT
 
-    args = [_BASH, "-c", command] if _BASH else command
+    wrapped = sandbox.wrap(command)
+    if wrapped:
+        args, use_shell = wrapped, False
+    elif _BASH:
+        args, use_shell = [_BASH, "-c", command], False
+    else:
+        args, use_shell = command, True
 
     try:
         completed = subprocess.run(
             args,
-            shell=not _BASH,
+            shell=use_shell,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             stdin=subprocess.DEVNULL,

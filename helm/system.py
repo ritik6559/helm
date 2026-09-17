@@ -1,8 +1,19 @@
 import platform
 from pathlib import Path
 
+from .sandbox import NAME as SANDBOX
 from .skills import skills_prompt
 from .tools.bash import SHELL_NAME
+
+
+def _sandbox_note() -> str:
+    if SANDBOX == "none":
+        return ""
+    return (
+        "\n- Commands run inside a sandbox with no network access, and can only write "
+        "inside the working directory. The .git directory is read only. Do not try to "
+        "install packages, fetch anything, or rewrite git history."
+    )
 
 
 def _skills_section() -> str:
@@ -26,10 +37,11 @@ Environment:
 - Working directory: {Path.cwd()}
 - Platform: {platform.system()}
 - Shell: {SHELL_NAME}
+- Sandbox: {SANDBOX}
 {_skills_section()}
 How to work:
 - Your bash tool runs {SHELL_NAME}. Write commands in that syntax, and use forward
-  slashes in paths.
+  slashes in paths.{_sandbox_note()}
 - Use bash to explore, run tests, and use git. Use read_file, str_replace, and
   write_file for file contents rather than cat, echo, or sed.
 - Nothing you run can accept input. Do not run a command that prompts, opens an
