@@ -1,34 +1,37 @@
+import json
+
 from system import system_prompt
 from llm import call_llm
 from tools import execute
+from ui import ui
 
 MAX_STEPS_PER_TURN = 25
 
-
-def _preview(text: str, limit: int = 200) -> str:
-    text = (text or "").strip()
-    if len(text) <= limit:
-        return text
-    return f"{text[:limit]} ... (+{len(text) - limit} chars)"
-
+def _parse_args(raw: str) -> dict:
+    """Decode tool arguments for display, tolerating whatever the model emitted."""
+    try:
+        args = json.loads(raw or "{}")
+    except json.JSONDecodeError:
+        return {"raw": raw}
+    return args if isinstance(args, dict) else {"raw": raw}
 
 def run_turn(messages: list) -> None:
     """Step until the model answers without calling a tool, or the cap is hit."""
-    
-    for step in range(1, MAX_STEPS_PER_TURN + 1):
-        message, usage = call_llm(messages)
+    for _ in range(MAX_STEPS_PER_TURN):
+        with ui.working():
+            message, usage = call_llm(messages)
+
         messages.append(message.model_dump(exclude_none=True))
 
         if message.content:
-            print(f"\nAgent: {message.content}\n")
+            ui.agent(message.content)
 
-        print(f"[step {step}] {usage}")
+        ui.usage(usage)
 
         if not message.tool_calls:
             return
 
         for index, tool_call in enumerate(message.tool_calls):
-            print(f"  -> {tool_call.function.name}({_preview(tool_call.function.arguments)})")
             try:
                 result = execute(tool_call)
             except KeyboardInterrupt:
@@ -39,35 +42,35 @@ def run_turn(messages: list) -> None:
                         "content": "Error: interrupted by the user.",
                     })
                 raise
-            print(f"     {_preview(result['content'])}")
+            ui.tool(
+                tool_call.function.name,
+                _parse_args(tool_call.function.arguments),
+                result["content"],
+            )
             messages.append(result)
 
-    print(f"\nStopped after {MAX_STEPS_PER_TURN} steps without finishing. Say 'continue' to keep going.")
-
+    ui.notice(f"stopped after {MAX_STEPS_PER_TURN} steps - say 'continue' to keep going")
 
 def main() -> None:
     messages = [{"role": "system", "content": system_prompt()}]
-    print("helm - /exit or Ctrl+D to quit, Ctrl+C to abort a turn")
+    ui.banner()
 
     while True:
-        try:
-            user_input = input("\n> ").strip()
-        except (EOFError, KeyboardInterrupt):
-            print()
-            return
+        user_input = ui.ask()
 
+        if user_input is None or user_input in {"/exit", "/quit"}:
+            break
         if not user_input:
             continue
-        if user_input in {"/exit", "/quit"}:
-            return
 
         messages.append({"role": "user", "content": user_input})
 
         try:
             run_turn(messages)
         except KeyboardInterrupt:
-            print("\n[interrupted]")
+            ui.notice("interrupted")
 
+    ui.summary()
 
 if __name__ == "__main__":
     main()
