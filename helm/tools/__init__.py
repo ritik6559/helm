@@ -1,8 +1,40 @@
 import json
 
+from .bash import DEFAULT_TIMEOUT, MAX_TIMEOUT, SHELL_NAME, bash
 from .files import read_file, write_file
 
 TOOL_SCHEMAS = [
+    {
+        "type": "function",
+        "function": {
+            "name": "bash",
+            "description": (
+                f"Run a command in {SHELL_NAME} from the current working directory. "
+                "Returns stdout and stderr combined, prefixed with the exit code when "
+                "the command fails. Use this for running tests, git, and inspecting the "
+                "project. Prefer read_file and write_file for reading and editing file "
+                "contents. stdin is closed, so never run a command that waits for input, "
+                "and never start a long-running server."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "command": {
+                        "type": "string",
+                        "description": "The command to run.",
+                    },
+                    "timeout": {
+                        "type": "integer",
+                        "description": (
+                            f"Seconds to wait before the command is killed. "
+                            f"Defaults to {DEFAULT_TIMEOUT}, maximum {MAX_TIMEOUT}."
+                        ),
+                    },
+                },
+                "required": ["command"],
+            },
+        },
+    },
     {
         "type": "function",
         "function": {
@@ -59,6 +91,7 @@ TOOL_SCHEMAS = [
 ]
 
 TOOLS = {
+    "bash": bash,
     "read_file": read_file,
     "write_file": write_file,
 }
