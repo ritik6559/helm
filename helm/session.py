@@ -2,6 +2,8 @@ import json
 from datetime import datetime
 from pathlib import Path
 
+from . import todos
+
 DIR = Path.home() / ".helm" / "sessions"
 
 
@@ -15,7 +17,7 @@ def _file(name: str) -> Path:
 
 def save(name: str, messages: list) -> None:
     DIR.mkdir(parents=True, exist_ok=True)
-    data = {"cwd": str(Path.cwd()), "messages": messages}
+    data = {"cwd": str(Path.cwd()), "messages": messages, "todos": todos.TODOS}
 
     temp = _file(name).with_suffix(".tmp")
     temp.write_text(json.dumps(data, indent=2), encoding="utf-8")
@@ -30,8 +32,13 @@ def _read(file: Path) -> dict | None:
 
 
 def load(name: str) -> list | None:
+    """Return a session's messages, restoring its todo list as a side effect."""
     data = _read(_file(name))
-    return data.get("messages") if data else None
+    if not data:
+        return None
+
+    todos.write_todos(data.get("todos") or [])
+    return data.get("messages")
 
 
 def _title(messages: list) -> str:

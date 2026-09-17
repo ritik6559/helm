@@ -3,6 +3,8 @@ import subprocess
 from datetime import datetime
 from pathlib import Path
 
+from .todos import todos_prompt
+
 HASH_LIMIT = 10 * 1024 * 1024
 
 LABELS = {
@@ -155,6 +157,11 @@ def reminder() -> dict:
         lines.append(f"git branch: {branch}")
 
     body = "\n".join(lines)
+
+    todos = todos_prompt()
+    if todos:
+        body = f"{body}\n\ntodos:\n{todos}"
+
     note = changes_note(file_changes())
     if note:
         body = f"{body}\n\n{note}"

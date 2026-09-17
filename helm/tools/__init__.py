@@ -1,6 +1,7 @@
 import json
 
 from ..skills import read_skill
+from ..todos import write_todos
 
 from .bash import DEFAULT_TIMEOUT, MAX_TIMEOUT, SHELL_NAME, bash
 from .files import read_file, str_replace, write_file
@@ -151,12 +152,51 @@ TOOL_SCHEMAS += [
     },
 ]
 
+TOOL_SCHEMAS.append(
+    {
+        "type": "function",
+        "function": {
+            "name": "write_todos",
+            "description": (
+                "Replace your todo list. Use it for tasks that take several steps: "
+                "write the plan out first, then call this again as each item finishes. "
+                "Always send the whole list, not just the part that changed. The current "
+                "list is shown back to you every turn."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "todos": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "task": {
+                                    "type": "string",
+                                    "description": "What needs doing, in a few words.",
+                                },
+                                "status": {
+                                    "type": "string",
+                                    "enum": ["pending", "doing", "done"],
+                                },
+                            },
+                            "required": ["task", "status"],
+                        },
+                    },
+                },
+                "required": ["todos"],
+            },
+        },
+    }
+)
+
 TOOLS = {
     "bash": bash,
     "read_file": read_file,
     "read_skill": read_skill,
     "str_replace": str_replace,
     "write_file": write_file,
+    "write_todos": write_todos,
 }
 
 
