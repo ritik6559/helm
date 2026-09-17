@@ -10,6 +10,8 @@ from rich.rule import Rule
 from rich.table import Table
 from rich.text import Text
 
+from .prompt import read
+
 ACCENT = "#7aa2f7"
 USER = "#9ece6a"
 TOOL = "#e0af68"
@@ -33,14 +35,17 @@ class UI:
             Rule(Text(" HELM ", style=f"bold {ACCENT}"), style=MUTED)
         )
         self.console.print(
-            Padding(Text("ctrl-d to exit", style=MUTED), (0, 0, 0, 2))
+            Padding(
+                Text("alt-enter for a new line · ctrl-d to exit", style=MUTED),
+                (0, 0, 0, 2),
+            )
         )
 
     def ask(self):
         """Return the typed line, or None if the user asked to exit."""
         self.console.print()
         try:
-            return self.console.input(f"[bold {USER}]>[/] ").strip()
+            return read("> ").strip()
         except (EOFError, KeyboardInterrupt):
             self.console.print()
             return None
