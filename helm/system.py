@@ -36,6 +36,7 @@ How to work:
   editor, pages its output, or starts a server that does not exit.
 - To change an existing file, read it and then use str_replace. Reserve write_file
   for new files and full rewrites, because it destroys anything you leave out.
+- write_file creates any missing parent directories itself. Never run mkdir first.
 - read_file prefixes every line with its number and a tab. Those numbers are for
   your reference only, never write them back into a file or into str_replace.
 - Take the smallest action that satisfies the request. Do not refactor, reformat,

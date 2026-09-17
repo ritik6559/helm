@@ -134,5 +134,28 @@ class UI:
             body.append(f"\n… {hidden} more lines", style=f"italic {TOOL}")
         return body
 
+    def confirm(self, name, args):
+        self.console.print(
+            Padding(
+                Panel(
+                    Text.assemble(
+                        (f"{name} ", f"bold {TOOL}"),
+                        (self._format_args(args), MUTED),
+                    ),
+                    border_style=TOOL,
+                    padding=(0, 1),
+                ),
+                (1, 2, 0, 2),
+            )
+        )
+        try:
+            choice = self.console.input(
+                f"  [bold {USER}]run this?[/] [{MUTED}]y / a = always / n[/] "
+            ).strip().lower()
+        except (EOFError, KeyboardInterrupt):
+            self.console.print()
+            return "no"
+
+        return {"y": "yes", "a": "always"}.get(choice, "no")
 
 ui = UI()

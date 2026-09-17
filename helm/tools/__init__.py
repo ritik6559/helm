@@ -5,6 +5,7 @@ from ..todos import write_todos
 
 from .bash import DEFAULT_TIMEOUT, MAX_TIMEOUT, SHELL_NAME, bash
 from .files import read_file, str_replace, write_file
+from ..permissions import check
 
 TOOL_SCHEMAS = [
     {
@@ -210,7 +211,8 @@ def execute(tool_call) -> dict:
     else:
         try:
             args = json.loads(tool_call.function.arguments or "{}")
-            result = fn(**args)
+            denied = check(name, args)
+            result = denied if denied else fn(**args)
         except json.JSONDecodeError as e:
             result = f"Error: could not parse arguments for {name}: {e}"
         except TypeError as e:
