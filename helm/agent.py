@@ -5,6 +5,7 @@ from .system import system_prompt
 from .llm import call_llm
 from .tools import execute
 from .ui import ui
+from .context import refresh, reminder
 
 MAX_STEPS_PER_TURN = 25
 
@@ -67,12 +68,15 @@ def main() -> None:
         if not user_input:
             continue
 
+        messages.append(reminder())
         messages.append({"role": "user", "content": user_input})
 
         try:
             run_turn(messages)
         except KeyboardInterrupt:
             ui.notice("interrupted")
+        finally:
+            refresh()
 
     ui.summary()
 
