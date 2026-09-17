@@ -1,7 +1,9 @@
 import json
 
+from ..skills import read_skill
+
 from .bash import DEFAULT_TIMEOUT, MAX_TIMEOUT, SHELL_NAME, bash
-from .files import read_file, write_file
+from .files import read_file, str_replace, write_file
 
 TOOL_SCHEMAS = [
     {
@@ -90,9 +92,70 @@ TOOL_SCHEMAS = [
     },
 ]
 
+TOOL_SCHEMAS += [
+    {
+        "type": "function",
+        "function": {
+            "name": "str_replace",
+            "description": (
+                "Replace an exact substring in a file. This is the preferred way to edit "
+                "an existing file, because everything outside old_string is left untouched. "
+                "old_string must match the file byte for byte including indentation, must "
+                "not carry the line numbers read_file adds, and must appear exactly once "
+                "unless replace_all is true."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "Path to the file, relative to the current directory.",
+                    },
+                    "old_string": {
+                        "type": "string",
+                        "description": "The exact text to find, with enough context to be unique.",
+                    },
+                    "new_string": {
+                        "type": "string",
+                        "description": "The text to put in its place.",
+                    },
+                    "replace_all": {
+                        "type": "boolean",
+                        "description": "Replace every occurrence instead of requiring a unique match.",
+                    },
+                },
+                "required": ["path", "old_string", "new_string"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "read_skill",
+            "description": (
+                "Open a skill by name and return its full instructions. The available "
+                "skills are listed in your system prompt with a one line summary each. "
+                "Read the whole skill before starting work it applies to."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "The skill name exactly as listed in the system prompt.",
+                    },
+                },
+                "required": ["name"],
+            },
+        },
+    },
+]
+
 TOOLS = {
     "bash": bash,
     "read_file": read_file,
+    "read_skill": read_skill,
+    "str_replace": str_replace,
     "write_file": write_file,
 }
 

@@ -1,7 +1,7 @@
 from openai import OpenAI
 
-from config import BASE_URL, API_KEY, MODEL
-from tools import TOOL_SCHEMAS
+from .config import BASE_URL, API_KEY, MODEL
+from .tools import TOOL_SCHEMAS
 
 client = OpenAI(
     base_url=BASE_URL,

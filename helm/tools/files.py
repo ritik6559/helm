@@ -46,3 +46,48 @@ def write_file(path: str, content: str) -> str:
 
     action = "Updated" if existed else "Created"
     return f"{action} {path} ({len(content.splitlines())} lines)."
+
+
+def str_replace(path: str, old_string: str, new_string: str, replace_all: bool = False) -> str:
+    """Replace an exact substring in a file, leaving the rest untouched."""
+    file = Path(path)
+    if not file.exists():
+        return f"Error: {path} does not exist."
+    if file.is_dir():
+        return f"Error: {path} is a directory, not a file."
+    if not old_string:
+        return "Error: old_string is empty. Use write_file to create a file."
+    if old_string == new_string:
+        return "Error: old_string and new_string are identical, nothing to do."
+
+    try:
+        content = file.read_text(encoding="utf-8")
+    except UnicodeDecodeError:
+        return f"Error: {path} is not a UTF-8 text file."
+    except OSError as e:
+        return f"Error reading {path}: {e}"
+
+    count = content.count(old_string)
+    if count == 0:
+        return (
+            f"Error: old_string was not found in {path}. It must match the file byte for "
+            "byte, including indentation, and must not include the line numbers that "
+            "read_file adds."
+        )
+    if count > 1 and not replace_all:
+        return (
+            f"Error: old_string appears {count} times in {path}. Include more surrounding "
+            "context to make it unique, or pass replace_all=true to change every one."
+        )
+
+    line = content[: content.index(old_string)].count("\n") + 1
+    updated = content.replace(old_string, new_string, -1 if replace_all else 1)
+
+    try:
+        file.write_text(updated, encoding="utf-8")
+    except OSError as e:
+        return f"Error writing {path}: {e}"
+
+    if count > 1:
+        return f"Replaced {count} occurrences in {path}."
+    return f"Replaced 1 occurrence in {path} at line {line}."

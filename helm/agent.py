@@ -1,9 +1,10 @@
 import json
 
-from system import system_prompt
-from llm import call_llm
-from tools import execute
-from ui import ui
+from .skills import SKILL_ERRORS
+from .system import system_prompt
+from .llm import call_llm
+from .tools import execute
+from .ui import ui
 
 MAX_STEPS_PER_TURN = 25
 
@@ -54,6 +55,9 @@ def run_turn(messages: list) -> None:
 def main() -> None:
     messages = [{"role": "system", "content": system_prompt()}]
     ui.banner()
+
+    for error in SKILL_ERRORS:
+        ui.notice(f"skipped skill - {error}")
 
     while True:
         user_input = ui.ask()
