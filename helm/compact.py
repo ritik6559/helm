@@ -1,5 +1,5 @@
-from .config import COMPACT_AT, MODEL
-from .llm import client
+from .config import COMPACT_AT
+from .llm import call_llm
 from .ui import ui
 
 KEEP = 20  # recent messages left verbatim
@@ -37,15 +37,12 @@ def compact(messages: list, used: int) -> list:
     ui.notice("compacting history")
 
     try:
-        response = client.chat.completions.create(
-            model=MODEL,
-            messages=old + [{"role": "user", "content": INSTRUCTION}],
-        )
+        message, _ = call_llm(old + [{"role": "user", "content": INSTRUCTION}])
     except Exception as e:
         ui.notice(f"could not compact: {e}")
         return messages
 
-    summary = response.choices[0].message.content
+    summary = message.content
 
     return [
         messages[0],

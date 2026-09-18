@@ -6,7 +6,7 @@ from .compact import compact
 from .skills import SKILL_ERRORS
 from .system import system_prompt
 from .llm import call_llm
-from .tools import execute
+from .tools import TOOL_SCHEMAS, execute
 from .ui import ui
 from .context import refresh, reminder
 
@@ -26,7 +26,7 @@ def run_turn(messages: list) -> int:
 
     for _ in range(MAX_STEPS_PER_TURN):
         with ui.working():
-            message, usage = call_llm(messages)
+            message, usage = call_llm(messages, TOOL_SCHEMAS)
 
         messages.append(message.model_dump(exclude_none=True))
 

@@ -1,18 +1,17 @@
 from openai import OpenAI
 
 from .config import BASE_URL, API_KEY, MODEL
-from .tools import TOOL_SCHEMAS
 
 client = OpenAI(
     base_url=BASE_URL,
     api_key=API_KEY
 )
 
-def call_llm(messages):
+def call_llm(messages, tools=None):
     response = client.chat.completions.create(
-        model = MODEL,
+        model=MODEL,
         messages=messages,
-        tools=TOOL_SCHEMAS
+        **({"tools": tools} if tools else {}),
     )
 
     output = response.choices[0].message

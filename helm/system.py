@@ -3,7 +3,7 @@ from pathlib import Path
 
 from .sandbox import NAME as SANDBOX
 from .skills import skills_prompt
-from .tools.bash import SHELL_NAME
+from .shell import SHELL_NAME
 
 
 def _sandbox_note() -> str:

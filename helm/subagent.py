@@ -1,3 +1,5 @@
+from .llm import call_llm
+from .system import system_prompt
 from .ui import ui
 
 MAX_STEPS = 15
@@ -15,9 +17,7 @@ say so plainly rather than guessing."""
 
 def task(question: str) -> str:
     """Run a fresh agent on one question and return only its answer."""
-    from .config import MODEL
-    from .llm import client
-    from .system import system_prompt
+    # Deferred: tools imports this module to register the task tool.
     from .tools import TOOL_SCHEMAS, execute
 
     tools = [t for t in TOOL_SCHEMAS if t["function"]["name"] in ALLOWED]
@@ -29,10 +29,7 @@ def task(question: str) -> str:
     ui.notice(f"subagent: {question}")
 
     for _ in range(MAX_STEPS):
-        response = client.chat.completions.create(
-            model=MODEL, messages=messages, tools=tools
-        )
-        message = response.choices[0].message
+        message, _ = call_llm(messages, tools)
         messages.append(message.model_dump(exclude_none=True))
 
         if not message.tool_calls:
