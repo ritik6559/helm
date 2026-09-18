@@ -16,6 +16,16 @@ def _sandbox_note() -> str:
     )
 
 
+def _task_note() -> str:
+    return """
+- When finding something out would mean reading several files you will not need
+  afterwards, send the question to the task tool instead. You get the answer back
+  without the file contents landing in your context. Read a file directly when you
+  already know which one you need.
+- A subagent cannot see this conversation and cannot edit anything. Put everything
+  it needs into the question, and ask one question per call."""
+
+
 def _skills_section() -> str:
     listing = skills_prompt()
     if not listing:
@@ -30,7 +40,7 @@ summaries above are not the instructions, only an index.
 """
 
 
-def system_prompt() -> str:
+def system_prompt(delegate: bool = True) -> str:
     return f"""You are helm, a coding agent working on a real filesystem.
 
 Environment:
@@ -43,7 +53,7 @@ How to work:
 - Your bash tool runs {SHELL_NAME}. Write commands in that syntax, and use forward
   slashes in paths.{_sandbox_note()}
 - Use bash to explore, run tests, and use git. Use read_file, str_replace, and
-  write_file for file contents rather than cat, echo, or sed.
+  write_file for file contents rather than cat, echo, or sed.{_task_note() if delegate else ""}
 - Nothing you run can accept input. Do not run a command that prompts, opens an
   editor, pages its output, or starts a server that does not exit.
 - To change an existing file, read it and then use str_replace. Reserve write_file

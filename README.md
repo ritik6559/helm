@@ -19,10 +19,11 @@ Create a `.env` in the project root:
 BASE_URL=https://openrouter.ai/api/v1
 API_KEY=sk-...
 MODEL=deepseek/deepseek-v4-flash
+COMPACT_AT=700000
 ```
 
-`MODEL` is optional and defaults to `deepseek/deepseek-v4-flash`. A missing
-`BASE_URL` or `API_KEY` fails at startup with a message rather than a traceback.
+`MODEL` and `COMPACT_AT` are optional. A missing `BASE_URL` or `API_KEY` fails at
+startup with a message rather than a traceback.
 
 ## Usage
 
@@ -49,6 +50,7 @@ without ending the session. Input history is kept in `~/.helm/history`.
 | `str_replace` | replace an exact substring, refusing ambiguous matches |
 | `read_skill` | open a skill's full instructions |
 | `write_todos` | replace the todo list |
+| `task` | hand a question to a subagent and get back only its answer |
 
 ## Permissions
 
@@ -129,6 +131,32 @@ of each changed file, so a second edit to an already-modified file is still
 caught. It is injected once per turn rather than per step, which keeps the cached
 prompt prefix stable.
 
+## Subagents
+
+The `task` tool runs a second agent with its own conversation, then hands the
+parent only its final message. A search that costs thirty tool calls and several
+whole files comes back as one paragraph, so the parent's context stays small.
+
+A subagent gets `bash`, `read_file` and `read_skill` — no writing, and no `task`
+of its own, so it cannot spawn more subagents. It runs for at most 15 steps, and
+its tool calls go through the same permission gate as the parent's.
+
+It cannot see the parent's conversation, so the question has to be self-contained.
+
+## Compaction
+
+When the prompt passes `COMPACT_AT` tokens, helm asks the model to summarise the
+older part of the conversation and replaces it with those notes, keeping the
+system prompt and the last 20 messages verbatim.
+
+The cut point is never allowed to fall between an assistant message and its tool
+results — that would make every later request invalid — so it moves forward to
+the next user message or plain assistant reply.
+
+Compaction only fires when both conditions hold: over the token threshold *and*
+longer than the messages being kept. It rewrites the prefix, which discards the
+prompt cache, so the threshold is deliberately high.
+
 ## Sessions
 
 Conversations are saved to `~/.helm/sessions/<timestamp>.json` after every turn,
@@ -145,6 +173,8 @@ helm/
 ├── llm.py          the only module that talks to the API
 ├── system.py       system prompt assembly
 ├── context.py      the per-turn <env> block
+├── compact.py      summarising old history when it gets too long
+├── subagent.py     running a nested agent for one question
 ├── permissions.py  the approval gate
 ├── sandbox.py      OS sandbox selection and command wrapping
 ├── skills.py       skill discovery and loading

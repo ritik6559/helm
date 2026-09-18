@@ -1,11 +1,13 @@
 import json
 
 from ..skills import read_skill
+from ..subagent import task
 from ..todos import write_todos
 
 from .bash import DEFAULT_TIMEOUT, MAX_TIMEOUT, SHELL_NAME, bash
 from .files import read_file, str_replace, write_file
 from ..permissions import check
+from ..subagent import task
 
 TOOL_SCHEMAS = [
     {
@@ -151,9 +153,6 @@ TOOL_SCHEMAS += [
             },
         },
     },
-]
-
-TOOL_SCHEMAS.append(
     {
         "type": "function",
         "function": {
@@ -188,8 +187,36 @@ TOOL_SCHEMAS.append(
                 "required": ["todos"],
             },
         },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "task",
+            "description": (
+                "Hand one self-contained question to a fresh agent with its own "
+                "context, and get back only its answer. Use it for searches that would "
+                "otherwise fill your context with file contents you do not need to "
+                "keep, such as finding where something is defined or tracing how a "
+                "feature works across several files. The subagent cannot edit "
+                "anything and cannot ask you questions, so put everything it needs "
+                "into the question."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "question": {
+                        "type": "string",
+                        "description": (
+                            "The full question, with enough context to answer it "
+                            "without seeing this conversation."
+                        ),
+                    },
+                },
+                "required": ["question"],
+            },
+        },
     }
-)
+]
 
 TOOLS = {
     "bash": bash,
@@ -198,6 +225,7 @@ TOOLS = {
     "str_replace": str_replace,
     "write_file": write_file,
     "write_todos": write_todos,
+    "task": task
 }
 
 
