@@ -13,3 +13,4 @@ def _require(name: str) -> str:
 BASE_URL = _require("BASE_URL")
 API_KEY = _require("API_KEY")
 MODEL = os.environ.get("MODEL", "deepseek/deepseek-v4-flash")
+COMPACT_AT = int(os.environ.get("COMPACT_AT", 700_000))

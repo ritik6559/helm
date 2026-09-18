@@ -2,6 +2,7 @@ import argparse
 import json
 
 from . import session
+from .compact import compact
 from .skills import SKILL_ERRORS
 from .system import system_prompt
 from .llm import call_llm
@@ -19,8 +20,10 @@ def _parse_args(raw: str) -> dict:
         return {"raw": raw}
     return args if isinstance(args, dict) else {"raw": raw}
 
-def run_turn(messages: list) -> None:
-    """Step until the model answers without calling a tool, or the cap is hit."""
+def run_turn(messages: list) -> int:
+    """Step until the model answers or the cap is hit. Returns the last prompt size."""
+    used = 0
+
     for _ in range(MAX_STEPS_PER_TURN):
         with ui.working():
             message, usage = call_llm(messages)
@@ -31,9 +34,10 @@ def run_turn(messages: list) -> None:
             ui.agent(message.content)
 
         ui.usage(usage)
+        used = usage.get("prompt_tokens") or 0
 
         if not message.tool_calls:
-            return
+            return used
 
         for index, tool_call in enumerate(message.tool_calls):
             try:
@@ -54,6 +58,7 @@ def run_turn(messages: list) -> None:
             messages.append(result)
 
     ui.notice(f"stopped after {MAX_STEPS_PER_TURN} steps - say 'continue' to keep going")
+    return used
 
 def parse_args():
     parser = argparse.ArgumentParser(prog="helm", description="A terminal coding agent.")
@@ -116,12 +121,14 @@ def main() -> None:
         messages.append(reminder())
         messages.append({"role": "user", "content": user_input})
 
+        used = 0
         try:
-            run_turn(messages)
+            used = run_turn(messages)
         except KeyboardInterrupt:
             ui.notice("interrupted")
         finally:
             refresh()
+            messages[:] = compact(messages, used)
             session.save(name, messages)
 
     ui.summary()
